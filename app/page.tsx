@@ -1,98 +1,76 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import api from './lib/api';
-import Image from "next/image";
-
-interface ApiResponse {
-  message: string;
-}
+import Link from 'next/link';
 
 export default function Home() {
-  const [message, setMessage] = useState<string | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await api.get<ApiResponse>('/');
-        setMessage(response.data.message);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center text-center max-w-2xl">
-        <h1 className="text-4xl sm:text-6xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          MyStoree
-        </h1>
-        <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300">
-          Let AI help you write your life story, one conversation at a time
-        </p>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <p className="text-lg text-purple-600 dark:text-purple-400">
-            Server message: {message}
-          </p>
-        )}
-        <div className="flex gap-4 items-center flex-col sm:flex-row mt-8">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-gradient-to-r from-purple-600 to-blue-600 text-white gap-2 hover:opacity-90 text-sm sm:text-base h-10 sm:h-12 px-6 sm:px-8"
-            href="/speech"
-          >
-            Start Your Story
-          </a>
-          <a
-            className="rounded-full border border-solid border-purple-600/20 dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-purple-50 dark:hover:bg-[#1a1a1a] text-sm sm:text-base h-10 sm:h-12 px-6 sm:px-8"
-            href="/how-it-works"
-          >
-            How It Works
-          </a>
-        </div>
-        
-        <div className="mt-12 space-y-6 text-left">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-              <Image
-                src="/chat.svg"
-                alt="Chat icon"
-                width={24}
-                height={24}
-                className="dark:invert"
-              />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">Natural Conversations</h3>
-              <p className="text-gray-600 dark:text-gray-300">Have meaningful discussions with our AI interviewer about your life experiences</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <Image
-                src="/pen.svg"
-                alt="Pen icon"
-                width={24}
-                height={24}
-                className="dark:invert"
-              />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">Guided Writing</h3>
-              <p className="text-gray-600 dark:text-gray-300">Transform your conversations into beautifully written stories</p>
-            </div>
+    <main className="flex min-h-screen flex-col items-center justify-between p-4 md:p-24">
+      <div className="z-10 max-w-5xl w-full items-center justify-between text-sm lg:flex">
+        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
+          <div className="flex items-center justify-center gap-2 p-4 lg:p-0">
+            <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Personal History AI
+            </span>
           </div>
         </div>
-      </main>
+      </div>
 
-    </div>
+      <div className="relative flex place-items-center">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            Preserve Your Life's Journey
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            Capture your memories and create a lasting digital legacy with the power of AI
+          </p>
+          <div className="flex justify-center gap-4">
+            <Link
+              href="/speech"
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Start Recording
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-3 lg:text-left">
+        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-800/30">
+          <h2 className="mb-3 text-2xl font-semibold">
+            Voice to Text{' '}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className="m-0 max-w-[30ch] text-sm opacity-50">
+            Simply speak your memories and watch as they're transformed into beautifully written text.
+          </p>
+        </div>
+
+        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-800/30">
+          <h2 className="mb-3 text-2xl font-semibold">
+            AI Enhancement{' '}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className="m-0 max-w-[30ch] text-sm opacity-50">
+            Our AI helps organize and enhance your memories while maintaining your authentic voice.
+          </p>
+        </div>
+
+        <div className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:border-gray-600 dark:hover:bg-gray-800/30">
+          <h2 className="mb-3 text-2xl font-semibold">
+            Digital Legacy{' '}
+            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+              -&gt;
+            </span>
+          </h2>
+          <p className="m-0 max-w-[30ch] text-sm opacity-50">
+            Create a chronological timeline of your life's most precious moments for future generations.
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }

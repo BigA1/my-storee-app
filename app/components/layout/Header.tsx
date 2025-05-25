@@ -34,7 +34,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              MyStoree
+              Personal History AI
             </Link>
           </div>
 
@@ -44,11 +44,13 @@ export default function Header() {
               Home
             </Link>
             <Link href="/speech" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
-              Record Story
+              Record Memory
             </Link>
-            <Link href="/how-it-works" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
-              How It Works
-            </Link>
+            {isAuthenticated && (
+              <Link href="/stories" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
+                Timeline
+              </Link>
+            )}
             {isAuthenticated ? (
               <button
                 onClick={handleLogout}
@@ -99,15 +101,17 @@ export default function Header() {
                 className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Record Story
+                Record Memory
               </Link>
-              <Link
-                href="/how-it-works"
-                className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                How It Works
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  href="/stories"
+                  className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Timeline
+                </Link>
+              )}
               {isAuthenticated ? (
                 <button
                   onClick={() => {

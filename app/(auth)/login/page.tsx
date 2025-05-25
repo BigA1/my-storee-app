@@ -14,17 +14,33 @@ export default function Page() {
   const redirectedFrom = searchParams.get('redirectedFrom');
   const supabase = createClient();
 
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push(redirectedFrom || '/');
+      }
+    };
+    checkSession();
+  }, [router, redirectedFrom]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError(error.message);
-    } else if (data.session) {
-      // Redirect to the original requested page or home
-      router.push(redirectedFrom || '/');
+      if (error) {
+        setError(error.message);
+      } else if (data.session) {
+        // Use router.push instead of window.location
+        router.push(redirectedFrom || '/');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Login error:', err);
     }
   };
 
