@@ -11,6 +11,7 @@ interface Media {
   created_at: string;
   url?: string;
   urlExpiry?: number;  // Add expiry timestamp
+  label?: string | null;  // Add label field
 }
 
 interface MediaDisplayProps {
@@ -22,6 +23,8 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
+  const [editingLabel, setEditingLabel] = useState<number | null>(null);
+  const [newLabel, setNewLabel] = useState('');
   const supabase = createClient();
 
   // Function to get a signed URL for a media item
@@ -119,6 +122,44 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
     return () => clearInterval(refreshInterval);
   }, [refreshExpiredUrls]);
 
+  const handleEditLabel = (item: Media) => {
+    setEditingLabel(item.id);
+    setNewLabel(item.label || '');
+  };
+
+  const handleSaveLabel = async (item: Media) => {
+    if (!session) return;
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/media/${item.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ label: newLabel.trim() })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update label');
+      }
+
+      // Update the media item in the state
+      setMedia(prev => prev.map(m => 
+        m.id === item.id ? { ...m, label: newLabel.trim() } : m
+      ));
+      setEditingLabel(null);
+    } catch (err) {
+      console.error('Error updating label:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update label');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLabel(null);
+    setNewLabel('');
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-4">
@@ -146,19 +187,60 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
         {media.map((item) => (
           <div key={item.id} className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
             {item.media_type === 'image' ? (
-              <img
-                src={item.url}
-                alt="Story attachment"
-                className="w-full h-48 object-cover"
-                crossOrigin="anonymous"
-                onError={async () => {
-                  // If image fails to load, try to refresh the URL
-                  const updatedItem = await getSignedUrl(item);
-                  setMedia(prev => prev.map(m => 
-                    m.id === item.id ? updatedItem : m
-                  ));
-                }}
-              />
+              <div>
+                <div className="relative">
+                  <img
+                    src={item.url}
+                    alt={item.label || "Story attachment"}
+                    className="w-auto h-auto max-w-full max-h-[500px] object-contain rounded-t-lg"
+                    crossOrigin="anonymous"
+                    onError={async () => {
+                      // If image fails to load, try to refresh the URL
+                      const updatedItem = await getSignedUrl(item);
+                      setMedia(prev => prev.map(m => 
+                        m.id === item.id ? updatedItem : m
+                      ));
+                    }}
+                  />
+                </div>
+                <div className="p-2">
+                  {editingLabel === item.id ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newLabel}
+                        onChange={(e) => setNewLabel(e.target.value)}
+                        placeholder="Enter label"
+                        className="flex-1 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600"
+                      />
+                      <button
+                        onClick={() => handleSaveLabel(item)}
+                        className="px-2 py-1 text-sm text-white bg-purple-600 rounded hover:bg-purple-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-2 py-1 text-sm text-gray-600 bg-gray-200 rounded hover:bg-gray-300 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {item.label || 'No label'}
+                      </span>
+                      <button
+                        onClick={() => handleEditLabel(item)}
+                        className="text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="p-4">
                 <audio
@@ -176,6 +258,43 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
                 >
                   Your browser does not support the audio element.
                 </audio>
+                <div className="mt-2">
+                  {editingLabel === item.id ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newLabel}
+                        onChange={(e) => setNewLabel(e.target.value)}
+                        placeholder="Enter label"
+                        className="flex-1 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600"
+                      />
+                      <button
+                        onClick={() => handleSaveLabel(item)}
+                        className="px-2 py-1 text-sm text-white bg-purple-600 rounded hover:bg-purple-700"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-2 py-1 text-sm text-gray-600 bg-gray-200 rounded hover:bg-gray-300 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {item.label || 'No label'}
+                      </span>
+                      <button
+                        onClick={() => handleEditLabel(item)}
+                        className="text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

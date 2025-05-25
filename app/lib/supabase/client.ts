@@ -1,36 +1,38 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-export function createClient() {
+export const createClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: {
-        name: 'sb-auth-token',
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 7, // 1 week
+      cookies: {
+        get(name: string) {
+          if (typeof window === 'undefined') {
+            return undefined;
+          }
+          const cookie = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${name}=`))
+          return cookie ? cookie.split('=')[1] : undefined
+        },
+        set(name: string, value: string, options: { path?: string; maxAge?: number }) {
+          if (typeof window === 'undefined') {
+            return;
+          }
+          document.cookie = `${name}=${value}; path=${options.path || '/'}; max-age=${options.maxAge || 3600}`
+        },
+        remove(name: string, options: { path?: string }) {
+          if (typeof window === 'undefined') {
+            return;
+          }
+          document.cookie = `${name}=; path=${options.path || '/'}; max-age=0`
+        },
       },
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storageKey: 'sb-auth-token',
-        storage: {
-          getItem: (key) => {
-            if (typeof window === 'undefined') return null;
-            return window.localStorage.getItem(key);
-          },
-          setItem: (key, value) => {
-            if (typeof window === 'undefined') return;
-            window.localStorage.setItem(key, value);
-          },
-          removeItem: (key) => {
-            if (typeof window === 'undefined') return;
-            window.localStorage.removeItem(key);
-          },
-        },
       }
     }
   )

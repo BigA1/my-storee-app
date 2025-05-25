@@ -5,7 +5,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     
     // Forward the request to the FastAPI backend
-    const response = await fetch('http://localhost:8000/api/transcribe', {
+    const response = await fetch('http://localhost:8000/api/transcription/transcribe', {
       method: 'POST',
       body: formData,
     });

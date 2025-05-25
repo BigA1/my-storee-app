@@ -9,6 +9,7 @@ export default function Page() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectedFrom = searchParams.get('redirectedFrom');
@@ -17,30 +18,50 @@ export default function Page() {
   useEffect(() => {
     // Check if user is already logged in
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push(redirectedFrom || '/');
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Login page: Session check:', { hasSession: !!session, error: sessionError });
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          return;
+        }
+
+        if (session) {
+          console.log('Login page: User already logged in, redirecting');
+          router.push(redirectedFrom || '/');
+        }
+      } catch (err) {
+        console.error('Session check error:', err);
       }
     };
     checkSession();
-  }, [router, redirectedFrom]);
+  }, [router, redirectedFrom, supabase.auth]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('Login page: Attempting login');
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password
+      });
 
       if (error) {
+        console.error('Login error:', error);
         setError(error.message);
       } else if (data.session) {
-        // Use router.push instead of window.location
+        console.log('Login page: Login successful, redirecting');
         router.push(redirectedFrom || '/');
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
       console.error('Login error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,6 +81,7 @@ export default function Page() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
+          disabled={isLoading}
         />
         <input
           type="password"
@@ -68,8 +90,15 @@ export default function Page() {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
+          disabled={isLoading}
         />
-        <button type="submit" className="bg-purple-600 text-white rounded p-2">Login</button>
+        <button 
+          type="submit" 
+          className="bg-purple-600 text-white rounded p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Logging in...' : 'Login'}
+        </button>
         {error && <p className="text-red-500">{error}</p>}
       </form>
       
