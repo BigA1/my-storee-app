@@ -5,7 +5,7 @@ import { createClient } from '@/app/lib/supabase/client';
 
 interface Media {
   id: number;
-  story_id: number;
+  memory_id: number;
   media_type: 'image' | 'audio';
   file_path: string;
   created_at: string;
@@ -15,10 +15,10 @@ interface Media {
 }
 
 interface MediaDisplayProps {
-  storyId: number;
+  memoryId: number;  // Updated from storyId to memoryId
 }
 
-export default function MediaDisplay({ storyId }: MediaDisplayProps) {
+export default function MediaDisplay({ memoryId }: MediaDisplayProps) {
   const [media, setMedia] = useState<Media[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,12 +82,11 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
 
   useEffect(() => {
     const fetchMedia = async () => {
-      if (!session) return;
-
       try {
-        const response = await fetch(`http://localhost:8000/api/stories/${storyId}/media`, {
+        const response = await fetch(`http://localhost:8000/api/memories/${memoryId}/media`, {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
           }
         });
 
@@ -96,25 +95,16 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
         }
 
         const data = await response.json();
-        
-        // Get signed URLs for each media item
-        const mediaWithUrls = await Promise.all(
-          data.map(getSignedUrl)
-        );
-        
-        setMedia(mediaWithUrls);
-      } catch (err) {
-        console.error('Error fetching media:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load media');
-      } finally {
-        setIsLoading(false);
+        setMedia(data);
+      } catch (error) {
+        console.error('Error fetching media:', error);
       }
     };
 
     if (session) {
       fetchMedia();
     }
-  }, [storyId, session, getSignedUrl]);
+  }, [memoryId, session, getSignedUrl]);
 
   // Set up periodic URL refresh
   useEffect(() => {
@@ -191,7 +181,7 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
                 <div className="relative">
                   <img
                     src={item.url}
-                    alt={item.label || "Story attachment"}
+                    alt={item.label || "Memory attachment"}
                     className="w-auto h-auto max-w-full max-h-[500px] object-contain rounded-t-lg"
                     crossOrigin="anonymous"
                     onError={async () => {
@@ -248,17 +238,8 @@ export default function MediaDisplay({ storyId }: MediaDisplayProps) {
                   className="w-full"
                   src={item.url}
                   crossOrigin="anonymous"
-                  onError={async () => {
-                    // If audio fails to load, try to refresh the URL
-                    const updatedItem = await getSignedUrl(item);
-                    setMedia(prev => prev.map(m => 
-                      m.id === item.id ? updatedItem : m
-                    ));
-                  }}
-                >
-                  Your browser does not support the audio element.
-                </audio>
-                <div className="mt-2">
+                />
+                <div className="p-2">
                   {editingLabel === item.id ? (
                     <div className="flex gap-2">
                       <input

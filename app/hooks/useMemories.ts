@@ -31,6 +31,9 @@ export function useMemories() {
       const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
       const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/memories`;
       
+      console.log('Fetching memories from:', apiUrl);
+      console.log('Using session token:', session.access_token);
+      
       const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -38,12 +41,17 @@ export function useMemories() {
         }
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData);
         throw new Error(errorData.detail || 'Failed to fetch memories');
       }
 
       const data = await response.json();
+      console.log('Received memories:', data);
       setMemories(data);
     } catch (err) {
       console.error('Error fetching memories:', err);

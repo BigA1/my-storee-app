@@ -29,7 +29,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/stories/search?` + new URLSearchParams({
+      const response = await fetch(`${API_BASE_URL}/api/memories/search?` + new URLSearchParams({
         ...(query && { query }),
         ...(startDate && { start_date: startDate }),
         ...(endDate && { end_date: endDate })
@@ -40,7 +40,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to search stories');
+        throw new Error('Failed to search memories');
       }
 
       const results = await response.json();
@@ -68,14 +68,14 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/stories`, {
+      const response = await fetch(`${API_BASE_URL}/api/memories`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch stories');
+        throw new Error('Failed to fetch memories');
       }
 
       const results = await response.json();
@@ -101,7 +101,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search stories..."
+              placeholder="Search memories..."
               className="w-full px-4 py-2 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>

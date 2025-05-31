@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useStories } from '@/app/hooks/useStories';
+import { useMemories } from '@/app/hooks/useMemories';
 
-export default function StoryList() {
-  const { stories, isLoading, error, refetch } = useStories();
+export default function MemoryList() {
+  const { memories, isLoading, error, refetch } = useMemories();
 
   if (isLoading) {
     return (
@@ -28,7 +28,7 @@ export default function StoryList() {
     );
   }
 
-  if (stories.length === 0) {
+  if (memories.length === 0) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 dark:text-gray-400 mb-4">No memories yet. Start recording your first memory!</p>
@@ -44,30 +44,30 @@ export default function StoryList() {
 
   return (
     <div className="space-y-8">
-      {stories.map((story) => (
+      {memories.map((memory) => (
         <Link
-          key={story.id}
-          href={`/stories/${story.id}`}
+          key={memory.id}
+          href={`/memories/${memory.id}`}
           className="block p-6 bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow"
         >
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0 w-24 text-center">
               <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                {new Date(story.date).toLocaleDateString('en-US', { 
+                {new Date(memory.date).toLocaleDateString('en-US', { 
                   month: 'short',
                   day: 'numeric'
                 })}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {new Date(story.date).toLocaleDateString('en-US', { 
+                {new Date(memory.date).toLocaleDateString('en-US', { 
                   year: 'numeric'
                 })}
               </div>
             </div>
             <div className="flex-grow">
-              <h3 className="text-lg font-semibold mb-2">{story.title}</h3>
+              <h3 className="text-lg font-semibold mb-2">{memory.title}</h3>
               <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                {story.content}
+                {memory.content}
               </p>
             </div>
           </div>

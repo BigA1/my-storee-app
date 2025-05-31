@@ -4,11 +4,11 @@ import { useState, useRef } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 
 interface MediaUploadProps {
-  storyId: number;
+  memoryId: number;
   onUploadComplete: () => void;
 }
 
-export default function MediaUpload({ storyId, onUploadComplete }: MediaUploadProps) {
+export default function MediaUpload({ memoryId, onUploadComplete }: MediaUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -34,11 +34,9 @@ export default function MediaUpload({ storyId, onUploadComplete }: MediaUploadPr
       // Create FormData
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('story_id', storyId.toString());
-      formData.append('media_type', file.type.startsWith('image/') ? 'image' : 'audio');
-      if (label.trim()) {
-        formData.append('label', label.trim());
-      }
+      formData.append('memory_id', memoryId.toString());
+      formData.append('media_type', file.type.startsWith('image/') ? 'image' : 'video');
+      formData.append('label', file.name);
 
       // Upload to backend
       const response = await fetch('http://localhost:8000/api/media/upload', {
@@ -96,7 +94,7 @@ export default function MediaUpload({ storyId, onUploadComplete }: MediaUploadPr
             type="file"
             ref={fileInputRef}
             onChange={handleFileSelect}
-            accept="image/*,audio/*"
+            accept="image/*,video/*"
             disabled={isUploading}
             className="hidden"
             id="media-upload"
@@ -112,7 +110,7 @@ export default function MediaUpload({ storyId, onUploadComplete }: MediaUploadPr
             {isUploading ? 'Uploading...' : 'Upload Media'}
           </label>
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            Supported formats: Images (JPG, PNG) and Audio (MP3, WAV)
+            Supported formats: Images (JPG, PNG) and Videos (MP4)
           </span>
         </div>
       </div>

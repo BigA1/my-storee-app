@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useRouter } from 'next/navigation';
 
 interface SpeechRecorderProps {
   onClose: () => void;
@@ -31,6 +32,7 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     return () => {
@@ -122,16 +124,26 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
       }
       
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('file', audioBlob, 'recording.webm');
+
+      // Get the session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Authentication error. Please try logging in again.');
+      }
 
       console.log('Sending transcription request...');
       const response = await fetch('/api/transcribe', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Transcription failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Transcription failed');
       }
 
       const data = await response.json();
@@ -146,25 +158,23 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
       setTranscript(prev => prev + ' ' + data.text);
     } catch (err) {
       console.error('Transcription error:', err);
-      setError('Failed to transcribe audio. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to transcribe audio. Please try again.');
     } finally {
       setIsTranscribing(false);
     }
   };
 
-  const validateStory = () => {
-    const errors: { title?: string; content?: string; date?: string } = {};
-    
+  const validateMemory = () => {
+    const errors: { [key: string]: string } = {};
+
     if (!title.trim()) {
       errors.title = 'Title is required';
-    } else if (title.length > 100) {
-      errors.title = 'Title must be less than 100 characters';
     }
-    
+
     if (!transcript.trim()) {
-      errors.content = 'Please record some audio before saving';
+      errors.content = 'Content is required';
     } else if (transcript.length > 10000) {
-      errors.content = 'Story content must be less than 10,000 characters';
+      errors.content = 'Memory content must be less than 10,000 characters';
     }
 
     if (!memoryDate) {
@@ -175,7 +185,7 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
     return Object.keys(errors).length === 0;
   };
 
-  const saveAudioAsMedia = async (audioBlob: Blob, storyId: number) => {
+  const saveAudioAsMedia = async (audioBlob: Blob, memoryId: number) => {
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
@@ -184,8 +194,9 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
 
       const formData = new FormData();
       formData.append('file', audioBlob, 'recording.webm');
-      formData.append('story_id', storyId.toString());
+      formData.append('memory_id', memoryId.toString());
       formData.append('media_type', 'audio');
+      formData.append('label', 'Voice Recording');
 
       const response = await fetch('http://localhost:8000/api/media/upload', {
         method: 'POST',
@@ -196,18 +207,18 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.detail || 'Failed to upload audio');
+        throw new Error('Failed to save audio');
       }
-    } catch (err) {
-      console.error('Error saving audio:', err);
-      // Don't throw error here, just log it
+    } catch (error) {
+      console.error('Error saving audio:', error);
+      throw error;
     }
   };
 
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateStory()) return;
+    e.preventDefault(); // Prevent default form submission
+    
+    if (!validateMemory()) return;
 
     try {
       setIsSaving(true);
@@ -222,10 +233,10 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
 
       if (!session) {
         console.error('No session found');
-        throw new Error('Please log in to save your story');
+        throw new Error('Please log in to save your memory');
       }
 
-      const response = await fetch('http://localhost:8000/api/stories', {
+      const response = await fetch('http://localhost:8000/api/memories/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,28 +245,27 @@ export default function SpeechRecorder({ onClose }: SpeechRecorderProps) {
         body: JSON.stringify({
           title,
           content: transcript,
-          date: memoryDate.toISOString().split('T')[0]
+          date: memoryDate
         })
       });
 
       if (!response.ok) {
         const data = await response.json();
-        console.error('Error response:', data);
-        throw new Error(data.detail || 'Failed to save story');
+        throw new Error(data.detail || 'Failed to save memory');
       }
 
       const data = await response.json();
-      
+
       // Save audio if enabled
       if (saveAudio && audioChunksRef.current.length > 0) {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         await saveAudioAsMedia(audioBlob, data.id);
       }
 
-      onClose();
+      router.push(`/memories?id=${data.id}`);
     } catch (err) {
-      console.error('Error saving story:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save story. Please try again.');
+      console.error('Error saving memory:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save memory. Please try again.');
     } finally {
       setIsSaving(false);
     }
