@@ -27,9 +27,14 @@ export default function Header() {
               Record Memory
             </Link>
             {isAuthenticated && (
-              <Link href="/memories" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
-                Memories
-              </Link>
+              <>
+                <Link href="/memories" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
+                  Memories
+                </Link>
+                <Link href="/interview" className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400">
+                  AI Interview
+                </Link>
+              </>
             )}
             {isAuthenticated ? (
               <button
@@ -82,13 +87,22 @@ export default function Header() {
               Record Memory
             </Link>
             {isAuthenticated && (
-              <Link
-                href="/memories"
-                className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Memories
-              </Link>
+              <>
+                <Link
+                  href="/memories"
+                  className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Memories
+                </Link>
+                <Link
+                  href="/interview"
+                  className="block px-3 py-2 rounded-md text-gray-600 hover:text-purple-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-purple-400 dark:hover:bg-gray-800"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  AI Interview
+                </Link>
+              </>
             )}
             {isAuthenticated ? (
               <button

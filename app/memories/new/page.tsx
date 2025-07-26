@@ -6,15 +6,91 @@ import { createClient } from '@/app/lib/supabase/client';
 import Link from 'next/link';
 import MediaUpload from '@/app/components/features/media/MediaUpload';
 
+// Memory date interface for flexible date input
+interface MemoryDate {
+  type: 'exact' | 'month' | 'year' | 'age' | 'period';
+  value: string;
+  description?: string; // For age ("when I was 12") or period ("summer of 2010")
+}
+
 export default function NewMemoryPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [date, setDate] = useState('');
+  const [memoryDate, setMemoryDate] = useState<MemoryDate>({ type: 'exact', value: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [memoryId, setMemoryId] = useState<number | null>(null);
   const supabase = createClient();
+
+  // Render different input types based on date type
+  const renderDateInput = () => {
+    switch (memoryDate.type) {
+      case 'exact':
+        return (
+          <input
+            type="date"
+            value={memoryDate.value}
+            onChange={(e) => setMemoryDate({ ...memoryDate, value: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          />
+        );
+      case 'month':
+        return (
+          <input
+            type="month"
+            value={memoryDate.value}
+            onChange={(e) => setMemoryDate({ ...memoryDate, value: e.target.value })}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          />
+        );
+      case 'year':
+        return (
+          <input
+            type="number"
+            min="1900"
+            max={new Date().getFullYear()}
+            value={memoryDate.value}
+            onChange={(e) => setMemoryDate({ ...memoryDate, value: e.target.value })}
+            placeholder="e.g., 2020"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          />
+        );
+      case 'age':
+        return (
+          <div className="space-y-2">
+            <input
+              type="number"
+              min="1"
+              max="120"
+              value={memoryDate.value}
+              onChange={(e) => setMemoryDate({ ...memoryDate, value: e.target.value })}
+              placeholder="e.g., 12"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+            <input
+              type="text"
+              value={memoryDate.description || ''}
+              onChange={(e) => setMemoryDate({ ...memoryDate, description: e.target.value })}
+              placeholder="e.g., when I was 12 years old"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            />
+          </div>
+        );
+      case 'period':
+        return (
+          <input
+            type="text"
+            value={memoryDate.value}
+            onChange={(e) => setMemoryDate({ ...memoryDate, value: e.target.value })}
+            placeholder="e.g., summer of 2010, during college, early 2000s"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +111,26 @@ export default function NewMemoryPage() {
         throw new Error('Please log in to create a memory');
       }
 
+      // Format date based on type
+      let formattedDate: string;
+      switch (memoryDate.type) {
+        case 'exact':
+          formattedDate = memoryDate.value;
+          break;
+        case 'month':
+          formattedDate = `${memoryDate.value}-01`; // Use first day of month
+          break;
+        case 'year':
+          formattedDate = `${memoryDate.value}-01-01`; // Use January 1st of year
+          break;
+        case 'age':
+        case 'period':
+          formattedDate = memoryDate.description || memoryDate.value;
+          break;
+        default:
+          formattedDate = memoryDate.value;
+      }
+
       const response = await fetch('http://localhost:8000/api/memories/', {
         method: 'POST',
         headers: {
@@ -44,7 +140,7 @@ export default function NewMemoryPage() {
         body: JSON.stringify({
           title,
           content,
-          date: date || undefined
+          date: formattedDate || undefined
         })
       });
 
@@ -102,15 +198,22 @@ export default function NewMemoryPage() {
 
           <div>
             <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Date
+              When did this happen?
             </label>
-            <input
-              type="date"
-              id="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-            />
+            <div className="space-y-2">
+              <select
+                value={memoryDate.type}
+                onChange={(e) => setMemoryDate({ type: e.target.value as MemoryDate['type'], value: '', description: '' })}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              >
+                <option value="exact">Exact Date</option>
+                <option value="month">Month and Year</option>
+                <option value="year">Year Only</option>
+                <option value="age">Age (e.g., when I was 12)</option>
+                <option value="period">Time Period (e.g., summer of 2010)</option>
+              </select>
+              {renderDateInput()}
+            </div>
           </div>
 
           <div>
@@ -130,7 +233,7 @@ export default function NewMemoryPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !memoryDate.value}
               className="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (

@@ -148,12 +148,20 @@ export default function MemoriesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Memories</h1>
-        <button
-          onClick={() => setIsSpeechDialogOpen(true)}
-          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
-        >
-          Record Memory
-        </button>
+        <div className="flex space-x-4">
+          <Link
+            href="/interview"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            AI Interview
+          </Link>
+          <button
+            onClick={() => setIsSpeechDialogOpen(true)}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+          >
+            Record Memory
+          </button>
+        </div>
       </div>
 
       <SearchBar onSearch={handleSearch} />
